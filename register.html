@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - eDoc</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#0f172a,#1e3a5f,#1d4ed8);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+    .card{background:white;border-radius:24px;padding:48px;width:100%;max-width:500px;box-shadow:0 32px 80px rgba(0,0,0,0.4);}
+    .logo{font-family:'Instrument Serif',serif;font-size:28px;color:#1d4ed8;margin-bottom:6px;}
+    h3{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:4px;}
+    .sub{font-size:13px;color:#64748b;margin-bottom:28px;}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .field{margin-bottom:16px;}
+    label{font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:6px;}
+    input,select{width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:border .2s;background:white;}
+    input:focus,select:focus{border-color:#2563eb;}
+    .doctor-fields{display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:16px;}
+    .doctor-fields.show{display:block;}
+    .doctor-fields label{color:#1d4ed8;}
+    .btn{width:100%;padding:13px;background:#1d4ed8;color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;}
+    .btn:hover{background:#1e40af;}
+    .btn:disabled{background:#94a3b8;}
+    .msg{margin-top:14px;padding:12px;border-radius:10px;font-size:13px;text-align:center;display:none;}
+    .msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;}
+    .msg.success{background:#f0fdf4;color:#16a34a;border:1px solid #86efac;}
+    .link{text-align:center;margin-top:16px;font-size:13px;color:#64748b;}
+    .link a{color:#1d4ed8;font-weight:700;text-decoration:none;}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">eDoc.</div>
+  <h3>Create Account</h3>
+  <p class="sub">Join eDoc — Hospital Management System</p>
+
+  <div class="row">
+    <div class="field">
+      <label>Full Name</label>
+      <input type="text" id="name" placeholder="Your full name">
+    </div>
+    <div class="field">
+      <label>Phone Number</label>
+      <input type="tel" id="phone" placeholder="9876543210">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Email Address</label>
+    <input type="email" id="email" placeholder="you@example.com">
+  </div>
+
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Min 6 characters">
+  </div>
+
+  <div class="field">
+    <label>Account Type</label>
+    <select id="role" onchange="toggleDoctor()">
+      <option value="patient">Patient</option>
+      <option value="doctor">Doctor</option>
+    </select>
+  </div>
+
+  <div class="doctor-fields" id="doctorFields">
+    <div class="row">
+      <div class="field">
+        <label>Specialization</label>
+        <select id="spec">
+          <option>Cardiology</option>
+          <option>Neurology</option>
+          <option>Orthopedics</option>
+          <option>Pediatrics</option>
+          <option>Dermatology</option>
+          <option>Ophthalmology</option>
+          <option>General Medicine</option>
+          <option>Accident and Emergency</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Experience (years)</label>
+        <input type="number" id="exp" placeholder="5" min="0">
+      </div>
+    </div>
+    <div class="field">
+      <label>Qualification</label>
+      <input type="text" id="qual" placeholder="MBBS, MD">
+    </div>
+  </div>
+
+  <button class="btn" id="btn" onclick="doRegister()">Create Account</button>
+  <div class="msg" id="msg"></div>
+  <p class="link">Already have an account? <a href="login.html">Sign in</a></p>
+</div>
+<script>
+function toggleDoctor(){
+  const v=document.getElementById('role').value;
+  document.getElementById('doctorFields').className='doctor-fields'+(v==='doctor'?' show':'');
+}
+async function doRegister(){
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const role=document.getElementById('role').value;
+  const phone=document.getElementById('phone').value.trim();
+  if(!name||!email||!password){show('Sab fields bharo!','error');return;}
+  const btn=document.getElementById('btn');
+  btn.disabled=true;btn.textContent='Creating account...';
+  const body={name,email,password,role,phone};
+  if(role==='doctor'){
+    body.specialization=document.getElementById('spec').value;
+    body.qualification=document.getElementById('qual').value||'MBBS';
+    body.experience=parseInt(document.getElementById('exp').value)||0;
+  }
+  try{
+    const r=await fetch('http://localhost:5000/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(r.ok){show('Account created! Redirecting to login...','success');setTimeout(()=>{window.location.href='login.html';},1200);}
+    else{show(d.message||'Registration failed!','error');btn.disabled=false;btn.textContent='Create Account';}
+  }catch(e){show('Backend connect nahi hua!','error');btn.disabled=false;btn.textContent='Create Account';}
+}
+function show(t,c){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+c;m.style.display='block';}
+</script>
+</body>
+</html>

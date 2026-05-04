@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patients - eDoc</title>
+  <link rel="stylesheet" href="patient.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="brand">eDoc.</span>
+      <span class="sub">Hospital Management</span>
+    </div>
+    <div class="profile">
+      <div class="profile-avatar" id="avatarInitial">A</div>
+      <h3 id="profileName">Administrator</h3>
+      <p id="profileEmail">admin@edoc.com</p>
+      <button class="logout" onclick="doLogout()">Sign Out</button>
+    </div>
+    <ul>
+      <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+      <li><a href="doctors.html"><span class="icon">🩺</span> Doctors</a></li>
+      <li><a href="schedule.html"><span class="icon">📅</span> Schedule</a></li>
+      <li><a href="appointment.html"><span class="icon">📋</span> Appointment</a></li>
+      <li><a href="patient.html" class="active"><span class="icon">👥</span> Patients</a></li>
+    </ul>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="header">
+      <button class="back-btn" onclick="window.history.back()">← Back</button>
+      <h2 style="font-size:18px;font-weight:800;color:#0f172a;">Patients</h2>
+      <div class="date">Today's Date<strong id="todayDate">—</strong></div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Patient/Doctor ke liye message -->
+      <div id="notAdminMsg" style="display:none;background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:28px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:12px;">🔒</div>
+        <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:8px;">Admin Only Page</div>
+        <div style="font-size:13px;color:#78350f;margin-bottom:16px;">Yeh page sirf Admin ke liye hai.</div>
+        <a href="appointment.html" style="background:#1d4ed8;color:white;padding:10px 24px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;">My Appointments dekhein →</a>
+      </div>
+
+      <!-- Admin ke liye table -->
+      <div class="section" id="patientSection">
+        <div class="section-head">
+          <div>
+            <h3>Patient List</h3>
+            <p>All registered patients</p>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="patientTable">
+            <tr><td colspan="6" style="text-align:center;padding:24px;color:#64748b;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const _user = JSON.parse(localStorage.getItem('user') || '{}');
+  const _token = localStorage.getItem('token');
+
+  // No token — login page
+  if (!_token) { window.location.href = 'login.html'; }
+
+  // Set profile
+  document.getElementById('todayDate').textContent = new Date().toISOString().split('T')[0];
+  if (_user.name) {
+    document.getElementById('profileName').textContent = _user.name;
+    document.getElementById('profileEmail').textContent = _user.email;
+    document.getElementById('avatarInitial').textContent = _user.name.charAt(0).toUpperCase();
+  }
+
+  function doLogout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
+  }
+
+  // Admin hai to patient.js load karo, warna message dikhao
+  if (_user.role === 'admin') {
+    document.getElementById('patientSection').style.display = 'block';
+    document.getElementById('notAdminMsg').style.display = 'none';
+
+    // patient.js dynamically load karo sirf admin ke liye
+    const script = document.createElement('script');
+    script.src = 'patient.js';
+    document.body.appendChild(script);
+
+  } else {
+    // Patient ya Doctor — JS load hi mat karo
+    document.getElementById('patientSection').style.display = 'none';
+    document.getElementById('notAdminMsg').style.display = 'block';
+  }
+</script>
+</body>
+</html>

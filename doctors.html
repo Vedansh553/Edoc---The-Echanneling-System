@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctors - eDoc</title>
+  <link rel="stylesheet" href="doctors.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="brand">eDoc.</span>
+      <span class="sub">Hospital Management</span>
+    </div>
+    <div class="profile">
+      <div class="profile-avatar" id="avatarInitial">A</div>
+      <h3 id="profileName">Administrator</h3>
+      <p id="profileEmail">admin@edoc.com</p>
+      <button class="logout" onclick="doLogout()">Sign Out</button>
+    </div>
+    <ul>
+      <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+      <li><a href="doctors.html" class="active"><span class="icon">🩺</span> Doctors</a></li>
+      <li><a href="schedule.html"><span class="icon">📅</span> Schedule</a></li>
+      <li><a href="appointment.html"><span class="icon">📋</span> Appointment</a></li>
+      <li><a href="patient.html"><span class="icon">👥</span> Patients</a></li>
+    </ul>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="header">
+      <button class="back-btn" onclick="window.location.href='dashboard.html'">← Back</button>
+      <input type="text" id="searchDoctor" placeholder="🔍 Search Doctor name or Email">
+      <button onclick="searchDoctor()">Search</button>
+      <button class="add-new" onclick="openAddModal()">+ Add New</button>
+      <div class="date">Today's Date<strong id="todayDate">—</strong></div>
+    </div>
+
+    <div class="page-body">
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <h3>All Doctors</h3>
+            <p>Manage all registered doctors</p>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Doctor Name</th>
+              <th>Email</th>
+              <th>Specialization</th>
+              <th>Experience</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="doctorTable">
+            <tr><td colspan="5"><div class="empty-state"><span class="emoji">🩺</span>Loading doctors...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal" id="addModal">
+  <div class="modal-content">
+    <h3>➕ Add New Doctor</h3>
+    <input type="text" id="newName" placeholder="Full Name">
+    <input type="email" id="newEmail" placeholder="Email">
+    <input type="password" id="newPwd" placeholder="Password (min 6 chars)">
+    <input type="tel" id="newPhone" placeholder="Phone Number">
+    <select id="newSpec">
+      <option value="Cardiology">Cardiology</option>
+      <option value="Neurology">Neurology</option>
+      <option value="Orthopedics">Orthopedics</option>
+      <option value="Pediatrics">Pediatrics</option>
+      <option value="Dermatology">Dermatology</option>
+      <option value="Ophthalmology">Ophthalmology</option>
+      <option value="General Medicine">General Medicine</option>
+      <option value="Accident and Emergency">Accident and Emergency</option>
+    </select>
+    <input type="text" id="newQual" placeholder="Qualification (e.g. MBBS MD)">
+    <input type="number" id="newExp" placeholder="Experience (years)" min="0">
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn-primary" onclick="submitAddDoctor()" style="flex:1">Save Doctor</button>
+      <button class="btn-danger" onclick="closeModal('addModal')" style="flex:1">Cancel</button>
+    </div>
+    <div id="addMsg" style="margin-top:12px;font-size:13px;text-align:center;display:none;padding:10px;border-radius:8px;"></div>
+  </div>
+</div>
+
+<script src="doctors.js"></script>
+<script>
+  // Set date
+  document.getElementById('todayDate').textContent = new Date().toISOString().split('T')[0];
+
+  // Set profile from localStorage
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.name) {
+    document.getElementById('profileName').textContent = user.name;
+    document.getElementById('profileEmail').textContent = user.email;
+    document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+  }
+
+  function doLogout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
+  }
+
+  function openAddModal() { document.getElementById('addModal').classList.add('show'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+  async function submitAddDoctor() {
+    const token = localStorage.getItem('token');
+    const body = {
+      name: document.getElementById('newName').value,
+      email: document.getElementById('newEmail').value,
+      password: document.getElementById('newPwd').value,
+      phone: document.getElementById('newPhone').value,
+      role: 'doctor',
+      specialization: document.getElementById('newSpec').value,
+      qualification: document.getElementById('newQual').value || 'MBBS',
+      experience: parseInt(document.getElementById('newExp').value) || 0
+    };
+    const msg = document.getElementById('addMsg');
+    try {
+      const r = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const d = await r.json();
+      msg.style.display = 'block';
+      if (r.ok) {
+        msg.style.background = '#f0fdf4'; msg.style.color = '#16a34a';
+        msg.textContent = '✅ Doctor added!';
+        setTimeout(() => { closeModal('addModal'); location.reload(); }, 1000);
+      } else {
+        msg.style.background = '#fef2f2'; msg.style.color = '#dc2626';
+        msg.textContent = d.message || 'Error!';
+      }
+    } catch(e) { msg.style.display='block'; msg.textContent='Connection error!'; }
+  }
+</script>
+</body>
+</html>

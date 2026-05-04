@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule - eDoc</title>
+  <link rel="stylesheet" href="schedule.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="brand">eDoc.</span>
+      <span class="sub">Hospital Management</span>
+    </div>
+    <div class="profile">
+      <div class="profile-avatar" id="avatarInitial">A</div>
+      <h3 id="profileName">Administrator</h3>
+      <p id="profileEmail">admin@edoc.com</p>
+      <button class="logout" onclick="doLogout()">Sign Out</button>
+    </div>
+    <ul>
+      <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+      <li><a href="doctors.html"><span class="icon">🩺</span> Doctors</a></li>
+      <li><a href="schedule.html" class="active"><span class="icon">📅</span> Schedule</a></li>
+      <li><a href="appointment.html"><span class="icon">📋</span> Appointment</a></li>
+      <li><a href="patient.html"><span class="icon">👥</span> Patients</a></li>
+    </ul>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="header">
+      <button class="back-btn" onclick="window.history.back()">← Back</button>
+      <h2 style="font-size:18px;font-weight:800;color:#0f172a;">Schedule Manager</h2>
+      <button class="add-new" onclick="openModal()">+ Add Session</button>
+      <div class="date">Today's Date<strong id="todayDate">—</strong></div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- FILTERS -->
+      <div class="filters">
+        <input type="date" id="filterDate">
+        <select id="filterDoctor">
+          <option value="">All Doctors</option>
+        </select>
+        <button class="btn-primary" onclick="filterSessions()">Filter</button>
+        <button class="btn-secondary" onclick="loadSessions()">Reset</button>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <h3>All Sessions</h3>
+            <p>Manage appointment sessions</p>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Session Title</th>
+              <th>Doctor</th>
+              <th>Date & Time</th>
+              <th>Max Bookings</th>
+              <th>Booked</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessionTable">
+            <tr><td colspan="6"><div class="empty-state"><span class="emoji">📅</span>Loading sessions...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD SESSION MODAL -->
+<div class="modal" id="sessionModal">
+  <div class="modal-content">
+    <h3>📅 Add New Session</h3>
+    <input type="text" id="title" placeholder="Session Title" required>
+    <select id="doctor" required>
+      <option value="">Select Doctor</option>
+    </select>
+    <input type="datetime-local" id="datetime" required>
+    <input type="number" id="maxBookings" placeholder="Max Bookings" min="1" value="10">
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn-primary" onclick="submitSession()" style="flex:1">Save Session</button>
+      <button class="btn-danger" onclick="closeModal()" style="flex:1">Cancel</button>
+    </div>
+    <div id="modalMsg" style="margin-top:12px;font-size:13px;text-align:center;display:none;padding:10px;border-radius:8px;"></div>
+  </div>
+</div>
+
+<script src="schedule.js"></script>
+<script>
+  document.getElementById('todayDate').textContent = new Date().toISOString().split('T')[0];
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.name) {
+    document.getElementById('profileName').textContent = user.name;
+    document.getElementById('profileEmail').textContent = user.email;
+    document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+  }
+  function doLogout() { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = 'login.html'; }
+  function openModal() { document.getElementById('sessionModal').classList.add('show'); }
+  function closeModal() { document.getElementById('sessionModal').classList.remove('show'); }
+</script>
+</body>
+</html>

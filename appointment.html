@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointments - eDoc</title>
+  <link rel="stylesheet" href="appointment.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="brand">eDoc.</span>
+      <span class="sub">Hospital Management</span>
+    </div>
+    <div class="profile">
+      <div class="profile-avatar" id="avatarInitial">A</div>
+      <h3 id="profileName">Administrator</h3>
+      <p id="profileEmail">admin@edoc.com</p>
+      <button class="logout" onclick="doLogout()">Sign Out</button>
+    </div>
+    <ul>
+      <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+      <li><a href="doctors.html"><span class="icon">🩺</span> Doctors</a></li>
+      <li><a href="schedule.html"><span class="icon">📅</span> Schedule</a></li>
+      <li><a href="appointment.html" class="active"><span class="icon">📋</span> Appointment</a></li>
+      <li><a href="patient.html"><span class="icon">👥</span> Patients</a></li>
+    </ul>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="header">
+      <button class="back-btn" onclick="window.history.back()">← Back</button>
+      <h2 style="font-size:18px;font-weight:800;color:#0f172a;">Appointments</h2>
+      <button class="add-new" onclick="openBookModal()">+ Book Appointment</button>
+      <div class="date">Today's Date<strong id="todayDate">—</strong></div>
+    </div>
+
+    <div class="page-body">
+
+      <!-- WELCOME BANNER -->
+      <div class="banner" id="welcomeBanner">
+        <div>
+          <h3>Welcome!</h3>
+          <h2 id="bannerName">Patient</h2>
+          <p>Track your upcoming and past appointments here.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <h3>Your Appointments</h3>
+            <p>All upcoming and past bookings</p>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Session</th>
+              <th>Doctor</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="appointmentTable">
+            <tr><td colspan="6" style="text-align:center;padding:24px;color:#64748b;">Loading appointments...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- BOOK APPOINTMENT MODAL -->
+<div class="modal" id="bookModal">
+  <div class="modal-content">
+    <h3>📋 Book Appointment</h3>
+    <select id="sessionSelect">
+      <option value="">-- Loading sessions... --</option>
+    </select>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button class="btn-primary" onclick="submitBooking()" style="flex:1">Confirm Booking</button>
+      <button class="btn-danger" onclick="closeBookModal()" style="flex:1">Cancel</button>
+    </div>
+    <div id="bookMsg" style="margin-top:12px;font-size:13px;text-align:center;display:none;padding:10px;border-radius:8px;"></div>
+  </div>
+</div>
+
+<script src="appointment.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+
+// Setup
+document.getElementById('todayDate').textContent = new Date().toISOString().split('T')[0];
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+if (user.name) {
+  document.getElementById('profileName').textContent = user.name;
+  document.getElementById('profileEmail').textContent = user.email;
+  document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
+  document.getElementById('bannerName').textContent = user.name + '.';
+}
+if (user.role === 'admin' || user.role === 'doctor') {
+  document.getElementById('welcomeBanner').style.display = 'none';
+}
+
+function doLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = 'login.html';
+}
+
+// Load sessions into dropdown
+async function loadSessionsForBooking() {
+  const token = localStorage.getItem('token');
+  const sel = document.getElementById('sessionSelect');
+  try {
+    const r = await fetch(`${API}/sessions`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const sessions = await r.json();
+    sel.innerHTML = '<option value="">-- Select a Session --</option>';
+    if (sessions.length === 0) {
+      sel.innerHTML = '<option value="">No sessions available</option>';
+      return;
+    }
+    sessions.forEach(s => {
+      const dt = s.scheduled_datetime ? s.scheduled_datetime.replace('T', ' ').substring(0, 16) : '';
+      sel.innerHTML += `<option value="${s.id}">${s.title} — Dr. ${s.doctor_name} — ${dt}</option>`;
+    });
+  } catch(e) {
+    sel.innerHTML = '<option value="">Error loading sessions</option>';
+  }
+}
+
+function openBookModal() {
+  document.getElementById('bookModal').classList.add('show');
+  document.getElementById('bookMsg').style.display = 'none';
+  loadSessionsForBooking();
+}
+
+function closeBookModal() {
+  document.getElementById('bookModal').classList.remove('show');
+}
+
+async function submitBooking() {
+  const token = localStorage.getItem('token');
+  const sessionId = document.getElementById('sessionSelect').value;
+  const msg = document.getElementById('bookMsg');
+
+  if (!sessionId) {
+    msg.style.display = 'block';
+    msg.style.background = '#fef2f2';
+    msg.style.color = '#dc2626';
+    msg.textContent = '⚠️ Pehle ek session select karo!';
+    return;
+  }
+
+  try {
+    const r = await fetch(`${API}/appointments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ session_id: parseInt(sessionId) })
+    });
+    const d = await r.json();
+    msg.style.display = 'block';
+    if (r.ok) {
+      msg.style.background = '#f0fdf4';
+      msg.style.color = '#16a34a';
+      msg.textContent = '✅ Appointment booked successfully!';
+      setTimeout(() => { closeBookModal(); location.reload(); }, 1200);
+    } else {
+      msg.style.background = '#fef2f2';
+      msg.style.color = '#dc2626';
+      msg.textContent = d.message || 'Booking failed!';
+    }
+  } catch(e) {
+    msg.style.display = 'block';
+    msg.style.background = '#fef2f2';
+    msg.style.color = '#dc2626';
+    msg.textContent = 'Backend connect nahi hua!';
+  }
+}
+
+// Load appointments table (override old JS function)
+window.addEventListener('load', async () => {
+  const token = localStorage.getItem('token');
+  const tbody = document.getElementById('appointmentTable');
+  try {
+    const r = await fetch(`${API}/appointments`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#64748b;">No appointments found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    data.forEach(apt => {
+      const dt = apt.scheduled_datetime ? apt.scheduled_datetime.replace('T',' ').substring(0,16) : '—';
+      const statusColor = apt.status === 'Confirmed' ? '#dcfce7;color:#16a34a' : apt.status === 'Cancelled' ? '#fee2e2;color:#dc2626' : '#dbeafe;color:#1d4ed8';
+      tbody.innerHTML += `
+        <tr>
+          <td>${apt.id}</td>
+          <td>${apt.session_title || '—'}</td>
+          <td>${apt.doctor_name || '—'}</td>
+          <td>${dt}</td>
+          <td><span style="background:${statusColor};padding:3px 10px;border-radius:50px;font-size:11px;font-weight:700;">${apt.status || 'Confirmed'}</span></td>
+          <td><button onclick="cancelAppointment(${apt.id})" style="background:#fee2e2;color:#dc2626;border:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Cancel</button></td>
+        </tr>`;
+    });
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#dc2626;">Backend connect nahi hua!</td></tr>';
+  }
+});
+</script>
+</body>
+</html>

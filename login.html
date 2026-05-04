@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - eDoc</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#0f172a,#1e3a5f,#1d4ed8);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .wrap{display:grid;grid-template-columns:1fr 1fr;max-width:900px;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.4);}
+    .left{background:linear-gradient(160deg,#1d4ed8,#1e3a5f);padding:52px 44px;display:flex;flex-direction:column;justify-content:space-between;}
+    .left .brand{font-family:'Instrument Serif',serif;font-size:32px;color:white;margin-bottom:8px;}
+    .left .tagline{font-size:13px;color:rgba(255,255,255,0.5);letter-spacing:1px;margin-bottom:48px;}
+    .left h2{font-family:'Instrument Serif',serif;font-size:36px;color:white;line-height:1.2;margin-bottom:16px;}
+    .left h2 em{font-style:italic;color:#93c5fd;}
+    .left p{font-size:14px;color:rgba(255,255,255,0.6);line-height:1.7;}
+    .features{margin-top:40px;display:flex;flex-direction:column;gap:12px;}
+    .feat{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,0.8);font-size:13px;font-weight:500;}
+    .feat span{width:32px;height:32px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .right{background:white;padding:52px 44px;}
+    .right h3{font-size:24px;font-weight:800;color:#0f172a;margin-bottom:6px;}
+    .right .sub{font-size:14px;color:#64748b;margin-bottom:28px;}
+    .demo{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 16px;margin-bottom:28px;font-size:12.5px;}
+    .demo strong{color:#1d4ed8;display:block;margin-bottom:6px;font-size:13px;}
+    .demo p{color:#334155;margin:3px 0;}
+    label{font-size:13px;font-weight:600;color:#334155;display:block;margin-bottom:6px;}
+    input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;margin-bottom:18px;transition:border .2s;}
+    input:focus{border-color:#2563eb;}
+    .btn{width:100%;padding:13px;background:#1d4ed8;color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s;}
+    .btn:hover{background:#1e40af;}
+    .btn:disabled{background:#94a3b8;cursor:not-allowed;}
+    .msg{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:13px;text-align:center;display:none;}
+    .msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;}
+    .msg.success{background:#f0fdf4;color:#16a34a;border:1px solid #86efac;}
+    .link{text-align:center;margin-top:18px;font-size:13px;color:#64748b;}
+    .link a{color:#1d4ed8;font-weight:700;text-decoration:none;}
+    @media(max-width:650px){.wrap{grid-template-columns:1fr;}.left{display:none;}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <div>
+      <div class="brand">eDoc.</div>
+      <div class="tagline">HOSPITAL MANAGEMENT SYSTEM</div>
+      <h2>Your Health,<br><em>Our Priority.</em></h2>
+      <p>Access expert doctors, book appointments instantly, and manage your health journey — all in one place.</p>
+      <div class="features">
+        <div class="feat"><span>🩺</span> 10+ Specialist Doctors</div>
+        <div class="feat"><span>📅</span> Easy Appointment Booking</div>
+        <div class="feat"><span>🔒</span> Secure & Private</div>
+      </div>
+    </div>
+  </div>
+  <div class="right">
+    <h3>Welcome Back!</h3>
+    <p class="sub">Sign in to your eDoc account</p>
+    <div class="demo">
+      <strong>🔑 Demo Credentials</strong>
+      <p>Admin &rarr; admin@edoc.com / admin123</p>
+      <p>Doctor &rarr; rahul@edoc.com / doctor123</p>
+      <p>Patient &rarr; amit@edoc.com / patient123</p>
+    </div>
+    <label>Email Address</label>
+    <input type="email" id="email" placeholder="you@example.com">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••">
+    <button class="btn" id="btn" onclick="doLogin()">Sign In</button>
+    <div class="msg" id="msg"></div>
+    <p class="link">Don't have an account? <a href="register.html">Register here</a></p>
+  </div>
+</div>
+<script>
+async function doLogin(){
+  const email=document.getElementById('email').value.trim();
+  const pwd=document.getElementById('password').value.trim();
+  const btn=document.getElementById('btn');
+  if(!email||!pwd){show('Email aur password bharo!','error');return;}
+  btn.disabled=true;btn.textContent='Signing in...';
+  try{
+    const r=await fetch('http://localhost:5000/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+    const d=await r.json();
+    if(r.ok){
+      localStorage.setItem('token',d.token);
+      localStorage.setItem('user',JSON.stringify(d.user));
+      show('Login successful! Redirecting...','success');
+      setTimeout(()=>{window.location.href='dashboard.html';},700);
+    }else{show(d.message||'Login failed!','error');btn.disabled=false;btn.textContent='Sign In';}
+  }catch(e){show('Backend connect nahi hua! XAMPP + python app.py check karo','error');btn.disabled=false;btn.textContent='Sign In';}
+}
+function show(t,c){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+c;m.style.display='block';}
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
